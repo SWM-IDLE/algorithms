@@ -1,0 +1,74 @@
+const fs = require("fs");
+// env가 linux면 백준 실행, 그게 아니면 로컬 입력
+const path = process.platform === "linux" ? "/dev/stdin" : "example.txt";
+const input = fs.readFileSync(path).toString().trim().split("\n");
+
+const [h, w] = input[0].split(" ").map(Number);
+let chs = input.slice(1, h + 1).map((el) => el.split(" ").map(Number));
+
+let chsCnt = 0;
+let time = 0;
+
+// 가장 처음 치즈 개수 기록
+chs.map((cheese) => cheese.map((c) => (chsCnt += c)));
+
+const dy = [0, 1, 0, -1];
+const dx = [1, 0, -1, 0];
+
+function dfs(ey, ex) {
+  for (let i = 0; i < 4; i++) {
+    const ny = ey + dy[i];
+    const nx = ex + dx[i];
+
+    // 0 <= ny < h and 0 <= nx < w and chs[ny][nx] = true
+    if (ny < 0 || ny >= h || nx < 0 || nx >= w) continue;
+    if (chs[ny][nx] === false) continue;
+    if (chs[ny][nx] === 1) {
+      chs[ny][nx] = "m";
+    } else if (chs[ny][nx] === 0) {
+      chs[ny][nx] = false;
+      dfs(ny, nx);
+    }
+  }
+}
+
+while (true) {
+  for (let i = 0; i < h; i++) {
+    for (let j = 0; j < w; j++) {
+      // 세로와 가로를 돌면서 외곽에서 탐색 (0번째 인덱스와 가장 오른,아래)
+      if (i === 0 || i === h - 1 || j === 0 || j === w - 1) {
+        if (chs[i][j] === 0) {
+          chs[i][j] = false;
+          dfs(i, j);
+        }
+      }
+    }
+  }
+
+  let meltedChs = 0;
+
+  chs = chs.map((cheese) =>
+    cheese.map((c) => {
+      // c로 표시된 부분에 대한 처리
+      if (c === false) c = 0;
+      else if (c === "m") {
+        c = 0;
+        meltedChs += 1;
+      }
+
+      return c;
+    })
+  );
+
+  time += 1;
+
+  // 더 이상 녹일 치즈가 없다면
+  if (chsCnt - meltedChs === 0) {
+    console.log(time);
+    console.log(chsCnt);
+    break;
+  } else {
+    // 기존 치즈 개수에서 녹인 개수 차감
+    chsCnt -= meltedChs;
+  }
+}
